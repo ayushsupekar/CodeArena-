@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  username  String   @unique
+  email     String   @unique
+  password  String?
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  submissions Submission[]
+  contests    ContestParticipant[]
+
+  @@map("users")
+}
+
+model Problem {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  difficulty  String
+  category    String
+  examples    Json
+  constraints Json
+  templates   Json
+  testCases   Json
+  timeLimit   Int      @default(2000)
+  memoryLimit Int      @default(256)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  submissions Submission[]
+
+  @@map("problems")
+}
+
+model Submission {
+  id         String   @id @default(cuid())
+  userId     String
+  problemId  String
+  code       String
+  language   String
+  status     String
+  verdict    String?
+  runtime    Int?
+  memory     Int?
+  passed     Int      @default(0)
+  total      Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  problem Problem @relation(fields: [problemId], references: [id])
+
+  @@map("submissions")
+}
+
+model Contest {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  startTime   DateTime
+  endTime     DateTime
+  problems    Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  participants ContestParticipant[]
+
+  @@map("contests")
+}
+
+model ContestParticipant {
+  id        String   @id @default(cuid())
+  userId    String
+  contestId String
+  score     Int      @default(0)
+  rank      Int?
+  joinedAt  DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  contest Contest @relation(fields: [contestId], references: [id])
+
+  @@unique([userId, contestId])
+  @@map("contest_participants")
+}

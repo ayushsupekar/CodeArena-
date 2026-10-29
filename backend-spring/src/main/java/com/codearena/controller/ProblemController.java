@@ -1,0 +1,11 @@
+package com.codearena.controller;
+import com.codearena.entity.Problem;import com.codearena.repository.*;
+import com.fasterxml.jackson.databind.ObjectMapper;import org.springframework.beans.factory.annotation.Autowired;import org.springframework.data.domain.Sort;import org.springframework.http.*;import org.springframework.web.bind.annotation.*;
+import java.util.*;
+@RestController public class ProblemController {
+ @Autowired ProblemRepository problems; @Autowired SubmissionRepository submissions; ObjectMapper mapper=new ObjectMapper();
+ private Object json(String s){try{return mapper.readValue(s,Object.class);}catch(Exception e){return s;}}
+ private Map<String,Object> full(Problem p){Map<String,Object>m=new LinkedHashMap<>();m.put("id",p.getId());m.put("title",p.getTitle());m.put("description",p.getDescription());m.put("difficulty",p.getDifficulty());m.put("category",p.getCategory());m.put("examples",json(p.getExamples()));m.put("constraints",json(p.getConstraints()));m.put("templates",json(p.getTemplates()));m.put("testCases",json(p.getTestCases()));m.put("timeLimit",p.getTimeLimit());m.put("memoryLimit",p.getMemoryLimit());m.put("createdAt",p.getCreatedAt());m.put("updatedAt",p.getUpdatedAt());return m;}
+ @GetMapping("/api/problems") public ResponseEntity<?> list(@RequestParam(required=false)String category,@RequestParam(required=false)String difficulty){List<Problem> list;if(category!=null&&difficulty!=null)list=problems.findByCategoryAndDifficulty(category,difficulty,Sort.by("id"));else if(category!=null)list=problems.findByCategory(category,Sort.by("id"));else if(difficulty!=null)list=problems.findByDifficulty(difficulty,Sort.by("id"));else list=problems.findAll(Sort.by("id"));List<Map<String,Object>> out=new ArrayList<>();for(Problem p:list){Map<String,Object>m=new LinkedHashMap<>();m.put("id",p.getId());m.put("title",p.getTitle());m.put("difficulty",p.getDifficulty());m.put("category",p.getCategory());m.put("_count",Map.of("submissions",submissions.countByProblemIdAndStatus(p.getId(),"Accepted")));out.add(m);}return ResponseEntity.ok(out);}
+ @GetMapping("/api/problems/{id}") public ResponseEntity<?> get(@PathVariable String id){Optional<Problem>p=problems.findById(id);if(p.isEmpty())return ResponseEntity.status(404).body(Map.of("error","Not found"));return ResponseEntity.ok(full(p.get()));}
+}

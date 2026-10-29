@@ -1,0 +1,45 @@
+openapi: 3.0.0
+info:
+  title: Judge0 API
+  description: API for compiling and executing code securely
+  version: 1.0.0
+
+servers:
+  - url: https://ce.judge0.com
+
+paths:
+  /submissions:
+    post:
+      summary: Submit code for execution
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - source_code
+                - language_id
+              properties:
+                source_code:
+                  type: string
+                language_id:
+                  type: integer
+                stdin:
+                  type: string
+      responses:
+        "201":
+          description: Submission created
+
+  /submissions/{token}:
+    get:
+      summary: Get execution result
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Execution result
